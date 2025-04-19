@@ -1,0 +1,201 @@
+1. 集群与节点信息
+查看集群信息：
+kubectl cluster-info
+查看节点状态：
+kubectl get nodes
+查看节点详细信息：
+kubectl describe nodes <node-name>
+2. 命名空间 (Namespace)
+查看所有命名空间：
+kubectl get namespaces
+# 缩写
+kubectl get ns
+切换到某个命名空间：
+kubectl config set-context --current --namespace=<namespace-name>
+查看指定命名空间的资源：
+kubectl get pods -n <namespace-name>
+3. Pod 操作
+查看所有 Pod：
+kubectl get pods --all-namespaces
+指定命名空间
+kubectl get pods -n <namespace>
+查看 Pod 详细信息：
+kubectl describe pod <pod-name>
+查看 Pod 日志：
+kubectl logs <pod-name>
+持续跟踪日志
+kubectl logs -f <pod-name>
+进入 Pod 的容器：
+kubectl exec -it <pod-name> -- /bin/bash
+删除 Pod：
+kubectl delete pod <pod-name>
+4. 部署 (Deployment)
+创建 Deployment：
+kubectl create deployment <deployment-name> --image=<image-name>
+查看 Deployment 状态：
+kubectl get deployments
+更新 Deployment 镜像：
+kubectl set image deployment/<deployment-name> <container-name>=<new-image>
+水平扩缩容：
+kubectl scale deployment <deployment-name> --replicas=3
+回滚 Deployment：
+kubectl rollout undo deployment/<deployment-name>
+5. 服务 (Service)
+查看所有服务：
+kubectl get services
+# 缩写
+kubectl get svc
+创建 Service：
+kubectl expose deployment <deployment-name> --port=80 --type=NodePort
+查看服务详细信息：
+kubectl describe service <service-name>
+### **6. 配置与存储**
+- 查看 ConfigMap：
+```bash
+kubectl get configmaps
+```
+- 查看 Secret：
+```bash
+kubectl get secrets
+```
+- 管理 PersistentVolume (PV) 和 PersistentVolumeClaim (PVC)：
+```bash
+kubectl get pv
+kubectl get pvc
+```
+
+---
+
+### **7. 调试与诊断**
+- 查看事件：
+```bash
+kubectl get events --sort-by=.metadata.creationTimestamp
+```
+- 端口转发到本地：
+```bash
+kubectl port-forward <pod-name> 8080:80
+```
+- 查看资源使用情况：
+```bash
+kubectl top nodes # 节点资源
+kubectl top pods # Pod 资源
+```
+
+---
+
+### **8. 其他常用操作**
+- 应用 YAML 文件：
+```bash
+kubectl apply -f <file.yaml>
+```
+- 删除资源：
+```bash
+kubectl delete -f <file.yaml>
+```
+- 查看资源描述（支持所有资源类型）：
+```bash
+kubectl describe <resource-type> <resource-name>
+# 例如：kubectl describe pod nginx
+```
+- 使用标签筛选资源：
+```bash
+kubectl get pods -l app=nginx
+```
+
+---
+
+缩写对照表
+- `po` → Pods
+- `deploy` → Deployments
+- `svc` → Services
+- `ns` → Namespaces
+- `rs` → ReplicaSets
+- `cm` → ConfigMaps
+ 
+
+ 
+
+查询k8s的资源
+
+kubectl api-resources
+ 
+
+ssh k8s@ip
+lscpu
+docker的安装，镜像的下载都已经给了，只能用龙星的镜像仓库，docker服务已经启动好了
+kubectl都已经安装好了，直接使用kubeadm命令部署就可以了
+/home/yamls下面会提供给大家一些辅助的yamls文件,包括calico.yaml,flannel.yml,metrics.yaml插件的部署文件 ，直接使用部署
+就可以了
+docker从指定镜像地址下载镜像
+直接部署：kubeadm init --kubernetes-version=v1.20.0 --pod-network-cidr=IP地址/16 --service-cirdr=ip/12 --apiserver-advertise-
+address=ip(本机) --ignore-preflight-errors=Swap --ignore-preflight-errors=Numcpu --image-repository cr.loognix.cn/kubernetes
+镜像单独缺了一个kubelet,是直接以服务的形式运行在主机上， 只要把node节点加载进去，会自动启动服务
+kubectl与kubelet区别
+kubectl get node # 一开始会报错，按照kubeadm init初始化完成后的提示操作
+docker ps # 查看运行的容器
+kubectl get pod -A
+增加工作节点：在kubeadm init之后会给出提示：kubeadm join ... 复制这条命令到node节点执行(如果这条命令忘掉了怎么办)
+kubectl get pod -A -o wide # 可以查看加入的节点 对应name kube-proxy-bph4g
+还需要网络插件的部署：kubectl apply -f flannel.yml 使用kubectl get pod -A -o wide查看(两个节点都运行了)
+到这一步结束，集群基本可以使用了
+下一步开始部署应用：nginx
+​ 创建命名空间：kubectl get ns/namespace # 查看有哪些命名空间
+​ kubectl create namespace ns-nginx
+​ 做应用部署：kubectl create deployment nginx-deploy --image=cr.loongnix.cn/library/nginx:1.19.9 -n ns-nginx
+​ kubectl get deployment -n ns-nginx
+​ 容器ip地址只能内部访问，外部访问不通
+​ 访问：curl ip
+​ kubectl get svc/service -n ns-nginx
+应用扩容：
+应用缩容：
+容器与服务的区别(pod与service),deployment是什么
+删掉集群重新部署：kubectl delete
+删除从节点node:kubectl delete node -n name
+kubeadm reset把整个集群清掉，(从节点也要执行)
+​ 具体的访问方式有一些小要求
+
+#kubectl是Kubernetes的命令行工具，用于与Kubernetes集群交互
+kubectl get node
+docker ps # 查看有哪些容器在运行
+kubectl get pod -A # 查看集群容器
+# 在控制节点上获取加入命令 0表示token有效期限为永久
+kubeadm token create --print-join-command --ttl 0
+kubectl get pod -A -o wide
+# 部署一个flannel网络
+cd /home/yamls
+kubectl apply -f flannel.yml
+kubectl get pod -A -o wide # 查看部署完成后容器运行的情况
+# 在集群内部部署应用
+# 1.创建命名空间
+kubectl get ns # 获取有哪些命名空间
+kubectl create namespace ns-nginx
+# 2.做应用部署
+kubectl create deployment nginx-deploy --image=cr.loongnix.cn/library/nginx:1.19.9 -n ns-nginx # nginx-deplo资源名称 -n命名空间
+kubect get deployment -n ns-nginx # 查看deployment
+kubectl get pod -n ns-nginx
+kubectl get pod -n ns-nginx -o wide
+# 端口映射
+kubectl expose deployment nginx-deploy --port=80 --type=NodePort -n ns-nginx
+# 端口映射会自动增加一个service
+kubectl get svc -n ns-nginx
+# 访问：curl 容器IP:映射端口 Welcome to ngnix!
+# 查看pod运行情况(目前只有一个pod)
+kubectl get pod -n ns-nginx
+# 扩容nginx到3个pod
+kubectl scale deployment/nginx-deploy --replicas=3 -n ns-nginx
+kubectl get pod -o wide -n ns-nginx
+# 缩容nginx到2个pod
+kubectl scale deployment/nginx-deploy --replicas=2 -n ns-nginx
+# 卸载环境
+kubectl get svc -n ns-nginx
+kubectl delete svc nginx-deploy -n ns-nginx
+kubectl get deployment -n ns-nginx
+kubectl delete deployment nginx-deploy -n ns-nginx
+kubectl get ns
+kubectl delete ns ns-nginx
+kubectl get pod -A
+# 清理集群
+kubectl delete node name # 删除从节点
+kubeadm reset # 删除整个集群(每个节点都要执行)
+
+ 
