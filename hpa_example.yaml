@@ -1,0 +1,35 @@
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: <hpa-name>          # 例如: myapp-hpa
+  namespace: <namespace>    # 命名空间（可选）
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment        # 或 StatefulSet
+    name: <deployment-name> # 目标工作负载名称（例如: myapp）
+  minReplicas: 1            # 最小副本数（≥1）
+  maxReplicas: 10           # 最大副本数
+  metrics:
+  # --- CPU 指标 ---
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization   # 或 AverageValue
+        averageUtilization: 80  # 目标 CPU 使用率（例如 80%）
+  # --- 内存指标 ---
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization    # 或 AverageValue
+        averageUtilization: 70  # 目标内存使用率（例如 70%）
+  # --- 自定义/外部指标示例 ---
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: packets-per-second
+  #     target:
+  #       type: AverageValue
+  #       averageValue: 1k
