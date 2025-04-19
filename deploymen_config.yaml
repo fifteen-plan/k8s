@@ -1,0 +1,39 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: app-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume  # 挂载 ConfigMap
+          mountPath: /etc/nginx/conf.d  # Nginx 配置目录
+          readOnly: true
+        - name: env-volume     # 挂载环境变量
+          mountPath: /etc/app-env
+      volumes:
+      - name: config-volume
+        configMap:
+          name: app-config    # 关联已创建的 ConfigMap
+          items:
+          - key: app.conf    # 选择指定 key
+            path: app.conf   # 挂载为目录中的文件名
+      - name: env-volume
+        configMap:
+          name: app-config
+          optional: true      # 允许部分键不存在
+
