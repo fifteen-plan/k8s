@@ -1,0 +1,17 @@
+# 进入任意 Pod 查看配置
+kubectl exec -it <pod-name> -n app-ns -- ls /etc/nginx/conf.d
+# 应看到 app.conf 文件
+
+# 查看环境变量挂载
+kubectl exec -it <pod-name> -n app-ns -- cat /etc/app-env/environment
+# 应显示 "production"
+
+# 从集群其他节点访问（需安装 curl）
+kubectl run test-$RANDOM --rm -it --image=curlimages/curl --restart=Never -n app-ns -- curl http://web-service.app-ns.svc.cluster.local
+
+# 或直接通过 Service IP 访问
+WEB_SERVICE_IP=$(kubectl get svc -n app-ns web-service -o jsonpath='{.spec.clusterIP}')
+kubectl exec -it <pod-name> -n app-ns -- curl -s $WEB_SERVICE_IP
+
+kubectl describe pod <pod-name> -n app-ns
+# 重点关注 Events 部分
