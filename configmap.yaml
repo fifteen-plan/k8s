@@ -1,0 +1,17 @@
+# configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: app-ns  # 必须与部署的 Namespace 一致
+data:
+  app.conf: |
+    server {
+      listen 80;
+      server_name localhost;
+      location / {
+        root /usr/share/nginx/html;
+        index index.html;
+      }
+    }
+  environment: "production"

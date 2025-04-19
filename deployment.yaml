@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  nginx-nginx
+  namespace: ns-nginx
+  labels:
+    app:  nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  nginx
+    spec:
+      # initContainers:
+        # Init containers are exactly like regular containers, except:
+          # - Init containers always run to completion.
+          # - Each init container must complete successfully before the next one starts.
+      containers:
+      - name:  nginx
+        image:  nginx:1.26
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe: # 就绪探针，用于判断容器是否准备好接收流量
+          httpGet: # 使用 HTTP GET 请求进行探测
+            path: /_status/healthz # 探测的 HTTP 路径（需确保应用实现该接口）
+            port: 80 # 探测的容器端口（需与容器暴露的端口一致）
+          initialDelaySeconds: 5 # 容器启动后等待 5 秒开始第一次探测
+          timeoutSeconds: 2 # 单次探测超时时间为 2 秒（超时视为失败）
+          successThreshold: 1 # 连续 1 次探测成功标记为就绪
+          failureThreshold: 3 # 连续 3 次探测失败标记为未就绪
+          periodSeconds: 10  # 每 10 秒探测一次
+        ports:
+        - containerPort:  80
+          name:  nginx
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: ns-nginx
+spec:
+  type: NodePort  # 关键修改点
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80          # Service 的端口（集群内部访问用）
+      targetPort: 80    # 容器端口
+      nodePort: 31000   # 节点端口（可选，范围 30000-32767）
