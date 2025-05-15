@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-config
-  namespace: app-ns  # 必须与部署的 Namespace 一致
+  namespace: app-ns  
 data:
   app.conf: |
     server {
