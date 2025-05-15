@@ -1,3 +1,4 @@
+# kubectl create deployment nginx --image=cr.loongnix.cn/library/nginx:1.19.9 -n wza -o yaml > nginx_wza.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,10 +12,10 @@ spec:
       app: nginx
   replicas: 2
   strategy:
-    rollingUpdate: # 滚动更新策略
-      maxSurge: 25%  # 最大可额 外创建的 Pod 数量（相对于 replicas）
-      maxUnavailable: 25%  # 更新过程中最多不可用的 Pod 数量
-    type: RollingUpdate # 更新策略类型（滚动更新）
+    rollingUpdate: 
+      maxSurge: 25%  
+      maxUnavailable: 25%  
+    type: RollingUpdate 
   template:
     metadata:
       labels:
@@ -28,19 +29,19 @@ spec:
       - name:  nginx
         image:  nginx:1.26
         resources:
-          requests: # 资源请求（HPA 依赖此字段！）
+          requests: 
             cpu: 100m
             memory: 100Mi  
-          limits: # 资源限制（容器最大可用资源）
+          limits: 
             cpu: 100m
             memory: 100Mi
         livenessProbe:
           tcpSocket:
             port: 80
-          initialDelaySeconds: 5 # 容器启动后 5 秒开始探测
-          timeoutSeconds: 5 # 探测超时时间
-          successThreshold: 1 # 成功阈值（连续 1 次成功视为健康）
-          failureThreshold: 3 # 失败阈值（连续 3 次失败视为不健康）
+          initialDelaySeconds: 5 
+          timeoutSeconds: 5 
+          successThreshold: 1 
+          failureThreshold: 3 
           periodSeconds: 10 
         ports:
         - containerPort:  80
@@ -61,14 +62,14 @@ metadata:
   name: nginx-service
   namespace: ns-nginx
 spec:
-  type: NodePort  # 关键修改点
+  type: NodePort 
   selector:
     app: nginx
   ports:
     - protocol: TCP
-      port: 80          # Service 的端口（集群内部访问用）
-      targetPort: 80    # 容器端口
-      nodePort: 31000   # 节点端口（可选，范围 30000-32767）
+      port: 80          
+      targetPort: 80   
+      nodePort: 31000  
 
 
 
